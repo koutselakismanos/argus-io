@@ -1,0 +1,7 @@
+# Pin constraints for the iCESugar iCE40P5 board.
+
+set_io clk 35
+
+set_io led_r 40
+set_io led_g 41
+set_io led_b 39
