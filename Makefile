@@ -5,7 +5,7 @@ MOD ?= top
 BUILD_DIR = build
 SIM_DIR = sim_build
 
-SRCS = top.sv pll.sv spi_slave.sv
+SRCS = regs_pkg.sv top.sv pll.sv spi_slave.sv
 
 PACKAGE = sg48
 DEVICE = up5k
@@ -43,15 +43,13 @@ sim:
 	@mkdir -p $(SIM_DIR)
 	
 	@echo "### Compiling Testbench for: $(MOD) ###"
-	# iverilog -g2012 -D SIMULATION -o $(SIM_DIR)/$(MOD).vvp $(MOD)_tb.sv $(SRCS)
-	iverilog -g2012 -D SIMULATION -o $(SIM_DIR)/$(MOD).vvp $(MOD)_tb.sv spi_slave.sv
+	iverilog -g2012 -D SIMULATION -o $(SIM_DIR)/$(MOD).vvp $(SRCS) $(MOD)_tb.sv
 	
 	@echo "### Running Simulation ###"
 	vvp -n $(SIM_DIR)/$(MOD).vvp
 	
 	@echo "### Opening Waveform ###"
 	gtkwave waveform.vcd
-
 clean:
 	rm -f $(PROJECT).json $(PROJECT).asc $(PROJECT).bin
 	rm -rf $(SIM_DIR) waveform.vcd
