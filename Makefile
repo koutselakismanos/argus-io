@@ -1,23 +1,20 @@
 PROJECT = argus
-TESTBENCH = testbench.v
-SIM_BIN = testbench.vvp
-WAVEFORM = waveform.vcd
+# Default module to simulate if none is specified
+MOD ?= top
 
-SRCS = top.v pll.v
+BUILD_DIR = build
+SIM_DIR = sim_build
+
+SRCS = top.sv pll.sv spi_slave.sv
 
 PACKAGE = sg48
 DEVICE = up5k
 PCF = icesugar.pcf
 FLASH_PATH = /run/media/$(USER)/iCELink
 
-
-# Synthesize
-SYNTH_CMD = yosys -p "synth_ice40 -top top -json $(PROJECT).json" -sv $(SRCS)
-# Place and route
+SYNTH_CMD = yosys -p "read_verilog -sv $(SRCS); synth_ice40 -top top -json $(PROJECT).json"
 PNR_CMD = nextpnr-ice40 --$(DEVICE) --package $(PACKAGE) --json $(PROJECT).json --pcf $(PCF) --asc $(PROJECT).asc
-# Package
 PACK_CMD = icepack $(PROJECT).asc $(PROJECT).bin
-
 
 all: $(PROJECT).bin
 
@@ -30,9 +27,6 @@ $(PROJECT).asc: $(PROJECT).json $(PCF)
 $(PROJECT).json: $(SRCS)
 	$(SYNTH_CMD)
 
-clean: clean_sim
-	rm -f $(PROJECT).json $(PROJECT).asc $(PROJECT).bin
-
 flash: $(PROJECT).bin
 	@echo "Programming..."
 	@if [ -d "$(FLASH_PATH)" ]; then \
@@ -40,19 +34,24 @@ flash: $(PROJECT).bin
 		sync; \
 		echo "Done."; \
 	else \
-		echo "iCESugar not found."; \
+		echo "iCESugar not found at $(FLASH_PATH). Check USB connection."; \
 		exit 1; \
 	fi
 
-simulate:
-	@echo "### Compiling for Simulation ###"
-	iverilog -D SIMULATION -o $(SIM_BIN) $(TESTBENCH) lcd_driver.v
+sim:
+	@echo "### Setting up Simulation Directory ###"
+	@mkdir -p $(SIM_DIR)
+	
+	@echo "### Compiling Testbench for: $(MOD) ###"
+	# iverilog -g2012 -D SIMULATION -o $(SIM_DIR)/$(MOD).vvp $(MOD)_tb.sv $(SRCS)
+	iverilog -g2012 -D SIMULATION -o $(SIM_DIR)/$(MOD).vvp $(MOD)_tb.sv spi_slave.sv
 	
 	@echo "### Running Simulation ###"
-	vvp $(SIM_BIN)
+	vvp -n $(SIM_DIR)/$(MOD).vvp
 	
 	@echo "### Opening Waveform ###"
-	gtkwave $(WAVEFORM)
+	gtkwave waveform.vcd
 
-clean_sim:
-	rm -f $(SIM_BIN) $(WAVEFORM) sim_output
+clean:
+	rm -f $(PROJECT).json $(PROJECT).asc $(PROJECT).bin
+	rm -rf $(SIM_DIR) waveform.vcd

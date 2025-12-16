@@ -15,6 +15,11 @@ module pll (
     output clock_out,
     output locked
 );
+`ifdef SIMULATION
+  assign clock_out = clock_in;
+  assign locked = 1'b1;
+
+`else
 
   SB_PLL40_PAD #(
       .FEEDBACK_PATH("SIMPLE"),
@@ -29,5 +34,6 @@ module pll (
       .PACKAGEPIN(clock_in),
       .PLLOUTCORE(clock_out)
   );
+`endif
 
 endmodule
