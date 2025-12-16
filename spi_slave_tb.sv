@@ -28,21 +28,20 @@ module spi_slave_tb;
   // System Clock Generation (100MHz)
   always #5 clk = ~clk;
 
-  // Task to mimic sending a byte from ESP32
-  task send_byte(input [7:0] data);
+  task static send_byte(input logic [7:0] data);
     integer i;
     begin
       cs_n = 0;  // Select Slave
-      #100;  // Wait a bit
+      #100;
 
       for (i = 7; i >= 0; i = i - 1) begin
-        mosi = data[i];  // Put bit on wire
-        #50 sclk = 1;  // Clock High (Slave Reads)
-        #100 sclk = 0;  // Clock Low (Slave Writes next bit)
+        mosi = data[i];
+        #50 sclk = 1;
+        #100 sclk = 0;
         #50;
       end
 
-      #100 cs_n = 1;  // Deselect
+      #100 cs_n = 1;
       #100;
     end
   endtask
