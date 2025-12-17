@@ -5,7 +5,7 @@ MOD ?= top
 BUILD_DIR = build
 SIM_DIR = sim_build
 
-SRCS = regs_pkg.sv top.sv pll.sv spi_slave.sv
+SRCS = memory_map.sv settings_controller.sv top.sv pll.sv spi_slave.sv
 
 PACKAGE = sg48
 DEVICE = up5k
@@ -39,17 +39,28 @@ flash: $(PROJECT).bin
 	fi
 
 sim:
-	@echo "### Setting up Simulation Directory ###"
-	@mkdir -p $(SIM_DIR)
-	
+	@echo "### Setting up Directories ###"
+	@mkdir -p $(BUILD_DIR) $(SIM_DIR)
+
+	@echo "### Converting SystemVerilog to Verilog-2005 (sv2v) ###"
+	sv2v -D SIMULATION -I. $(SRCS) $(MOD)_tb.sv > $(BUILD_DIR)/converted_sim.v
+
+	# @echo "### Compiling Testbench for: $(MOD) ###"
+	# # iverilog -g2012 -D SIMULATION -o $(SIM_DIR)/$(MOD).vvp $(SRCS) $(MOD)_tb.sv
+	# iverilog -g2012 -o sim_build/top.vvp build/converted_sim.v
 	@echo "### Compiling Testbench for: $(MOD) ###"
-	iverilog -g2012 -D SIMULATION -o $(SIM_DIR)/$(MOD).vvp $(SRCS) $(MOD)_tb.sv
-	
+	iverilog -g2012 -o $(SIM_DIR)/$(MOD).vvp $(BUILD_DIR)/converted_sim.v
+
 	@echo "### Running Simulation ###"
 	vvp -n $(SIM_DIR)/$(MOD).vvp
-	
+
 	@echo "### Opening Waveform ###"
 	gtkwave waveform.vcd
+
+# sim:
+# 	sv2v -I. memory_map.sv settings_controller.sv top.sv pll.sv spi_slave.sv top_tb.sv > build/converted_sim.v
+# 	iverilog -g2012 -o sim_build/top.vvp build/converted_sim.v
+# 	vvp sim_build/top.vvp
 clean:
 	rm -f $(PROJECT).json $(PROJECT).asc $(PROJECT).bin
 	rm -rf $(SIM_DIR) waveform.vcd
