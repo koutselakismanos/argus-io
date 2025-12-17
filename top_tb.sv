@@ -1,29 +1,23 @@
 `timescale 1ns / 1ps
-
-// 1. Import Package at the top (Safe for Icarus if compiled first)
-import regs_pkg::*;
+`include "memory_map.sv"
+import memory_map::*;
 
 module top_tb;
-
-  // --- Signals ---
   logic clk;
-  logic led_r, led_g, led_b;
   logic sclk, mosi, miso, cs_n;
+  logic led_r, led_g, led_b;
 
-  // --- Test Variables (MOVED HERE TO FIX ERROR) ---
-  // We declare them here so they are available for the whole simulation
-  logic [7:0] received_bytes[7];
-  logic [7:0] garbage;  // Scratch variable for writes
+  // Test Variables
+  logic [7:0] rx_buffer         [7];
+  logic [7:0] temp_rx_byte;
+  logic       initial_led_state;
+  logic       sys_rst;
 
-  // --- Instantiate the Device Under Test (DUT) ---
   top dut (.*);
-
-  // --- Clock Generation (12MHz) ---
   initial clk = 0;
   always #41.666 clk = ~clk;
 
-  // --- SPI Master Task ---
-  task static spi_transaction(input logic [7:0] tx_data, output logic [7:0] rx_data);
+  task automatic spi_transaction(input logic [7:0] tx_data, output logic [7:0] rx_data);
     integer i;
     begin
       for (i = 7; i >= 0; i = i - 1) begin
@@ -39,73 +33,75 @@ module top_tb;
     end
   endtask
 
-  // --- Main Test Sequence ---
   initial begin
     $dumpfile("waveform.vcd");
     $dumpvars(0, top_tb);
     $display("### Simulation Started ###");
-
-    // Initialize Signals
     sclk = 0;
     mosi = 0;
     cs_n = 1;
-
+    sys_rst = 1;
     #2000;
+    sys_rst = 0;
+    #1000;
 
-
-    // --- TEST 1: READ DEVICE ID ---
+    // --- TEST 1: READ ID ---
     $display("--- TEST 1: Reading Device ID ---");
-
     cs_n = 0;
-    #100;
+    #500;
+    spi_transaction(AddrSysId0, temp_rx_byte);  // Use temp var
 
-    // 1. Send Address (FPGA calculates address after this)
-    spi_transaction(REG_SYS_ID_0, garbage);
-
-    // 2. Read 7 bytes (1 Latency Byte + 5 ID + 1 Version)
-    spi_transaction(8'hFF, received_bytes[0]);  // Latency Byte (Garbage/Old Data)
-    spi_transaction(8'hFF, received_bytes[1]);  // Real 'A'
-    spi_transaction(8'hFF, received_bytes[2]);  // Real 'R'
-    spi_transaction(8'hFF, received_bytes[3]);  // Real 'G'
-    spi_transaction(8'hFF, received_bytes[4]);  // Real 'U'
-    spi_transaction(8'hFF, received_bytes[5]);  // Real 'S'
-    spi_transaction(8'hFF, received_bytes[6]);  // Real Version
+    // --- THE PATTERN ---
+    spi_transaction(8'hFF, temp_rx_byte);
+    rx_buffer[0] = temp_rx_byte;
+    spi_transaction(8'hFF, temp_rx_byte);
+    rx_buffer[1] = temp_rx_byte;
+    spi_transaction(8'hFF, temp_rx_byte);
+    rx_buffer[2] = temp_rx_byte;
+    spi_transaction(8'hFF, temp_rx_byte);
+    rx_buffer[3] = temp_rx_byte;
+    spi_transaction(8'hFF, temp_rx_byte);
+    rx_buffer[4] = temp_rx_byte;
+    spi_transaction(8'hFF, temp_rx_byte);
+    rx_buffer[5] = temp_rx_byte;
+    spi_transaction(8'hFF, temp_rx_byte);
+    rx_buffer[6] = temp_rx_byte;
 
     cs_n = 1;
-    #100;
+    #500;
 
-    // --- VERIFICATION ---
-    // Note: We skip received_bytes[0]
-    $display("Received Sequence: %c %c %c %c %c %c %h", received_bytes[0], received_bytes[1],
-             received_bytes[2], received_bytes[3], received_bytes[4], received_bytes[5],
-             received_bytes[6]);
+    if (rx_buffer[1] == "A" && rx_buffer[5] == "S") $display(">>> TEST 1 PASSED <<<");
+    else $display("!!! TEST 1 FAILED !!!");
 
-    // Check starting from Index 1
-    if (received_bytes[1] == "A" && received_bytes[5] == "S" && received_bytes[6] == 8'h01) begin
-      $display(">>> TEST 1 PASSED! <<<");
-    end else begin
-      $display("!!! TEST 1 FAILED! !!!");
-    end
-
-    #2000;
-
-    // --- TEST 2: WRITE TO LED REGISTER ---
-    $display("--- TEST 2: Writing 0x01 to REG_LED_CTRL ---");
-
+    $display("--- TEST 2: Writing to LED ---");
+    initial_led_state = led_b;
     cs_n = 0;
-    #100;
+    #500;
+    spi_transaction(AddrLedCtrl, temp_rx_byte);
+    spi_transaction(8'h01, temp_rx_byte);
+    cs_n = 1;
+    #500;
 
-    // spi_transaction(REG_LED_CTRL, garbage);
-    spi_transaction(8'h01, garbage);
+    if (led_b != initial_led_state) $display(">>> TEST 2 PASSED <<<");
+    else $display("!!! TEST 2 FAILED !!!");
+
+    $display("--- TEST 3: Reading back LED ---");
+    cs_n = 0;
+    #500;
+    spi_transaction(AddrLedCtrl, temp_rx_byte);
+
+    spi_transaction(8'hFF, temp_rx_byte);
+    rx_buffer[0] = temp_rx_byte;
+    spi_transaction(8'hFF, temp_rx_byte);
+    rx_buffer[1] = temp_rx_byte;
 
     cs_n = 1;
-    #100;
+    #500;
 
-    $display(">>> TEST 2 Complete. <<<");
+    if (rx_buffer[1] == 8'h01) $display(">>> TEST 3 PASSED <<<");
+    else $display("!!! TEST 3 FAILED !!!");
 
     #5000;
-    $display("### Simulation Finished ###");
     $finish;
   end
-
 endmodule

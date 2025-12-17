@@ -1,7 +1,8 @@
-import regs_pkg::*;
+import memory_map::*;
 
 module top (
     input logic clk,
+    input logic sys_rst,
 
     input  logic sclk,
     input  logic cs_n,
@@ -29,7 +30,7 @@ module top (
 
   spi_slave _spi_slave (
       .clk(clk_100),
-      .rst(1'b0),
+      .rst(sys_rst),
       .sclk(sclk),
       .cs_n(cs_n),
       .mosi(mosi),
@@ -51,29 +52,29 @@ module top (
   typedef enum {
     WAIT_FOR_ADDRESS,
     DATA_TRANSACTION
-  } state_t;
+  } spi_state_t;
 
-  state_t state = WAIT_FOR_ADDRESS;
+  spi_state_t spi_state = WAIT_FOR_ADDRESS;
   logic [7:0] current_address;
   logic reg_write_enable;
 
   always_ff @(posedge clk_100) begin
     if (cs_n) begin
-      state <= WAIT_FOR_ADDRESS;
+      spi_state <= WAIT_FOR_ADDRESS;
       reg_write_enable <= 1'b0;
       current_address <= 0;
     end else if (rx_valid) begin
-      case (state)
+      case (spi_state)
         WAIT_FOR_ADDRESS: begin
           current_address <= rx_byte;
-          state <= DATA_TRANSACTION;
+          spi_state <= DATA_TRANSACTION;
         end
         DATA_TRANSACTION: begin
           reg_write_enable <= 1'b1;
           current_address  <= current_address + 1;
         end
         default: begin
-          state <= WAIT_FOR_ADDRESS;
+          spi_state <= WAIT_FOR_ADDRESS;
         end
       endcase
     end else begin
@@ -81,29 +82,18 @@ module top (
     end
   end
 
-  localparam logic [7:0] Version = 8'h01;
+  memory_map::fpga_settings_t active_settings;
 
+  settings_controller _settings_controller (
+      .clk(clk_100),
+      .rst(sys_rst),
+      .write_enable(reg_write_enable),
+      .target_addr(current_address),
+      .write_data(rx_byte),
+      .read_data(tx_byte),
+      .current_settings(active_settings)
+  );
 
-  always_ff @(posedge clk_100) begin
-    if (reg_write_enable) begin
-      case (current_address)
-        default: ;
-      endcase
-    end
-  end
-
-  always_comb begin
-
-
-    case (current_address)
-      RegSysId0: tx_byte = "A";
-      RegSysId1: tx_byte = "R";
-      RegSysId2: tx_byte = "G";
-      RegSysId3: tx_byte = "U";
-      RegSysId4: tx_byte = "S";
-      RegSysVersion: tx_byte = Version;
-      default: tx_byte = 8'h00;
-    endcase
-  end
+  assign led_b = active_settings.led_active;
 
 endmodule
