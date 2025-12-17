@@ -9,4 +9,4 @@ set_io led_b 39
 set_io sclk 4 # need to recheck these values
 set_io cs_n 6
 set_io mosi 9
-set_io miso 10 
+set_io miso 10

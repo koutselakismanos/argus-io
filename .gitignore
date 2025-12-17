@@ -5,3 +5,7 @@ argus.json
 sim_output
 testbench.vvp
 waveform.vcd
+
+.idea/
+build/
+sim_build/
