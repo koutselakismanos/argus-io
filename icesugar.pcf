@@ -6,7 +6,9 @@ set_io led_r 40
 set_io led_g 41
 set_io led_b 39
 
-set_io sclk 4 # need to recheck these values
+ # need to recheck all values bellow
+set_io sclk 4
 set_io cs_n 6
 set_io mosi 9
 set_io miso 10
+set_io sys_rst 11

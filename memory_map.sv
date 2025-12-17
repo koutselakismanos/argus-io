@@ -40,19 +40,8 @@ package memory_map;
   localparam logic [7:0] AddrReadOnly = 8'h05;  // 0x00 - 0x05 is PermReadOnly
 
   localparam logic [7:0] AddrSysId0 = 8'h00;
-  // localparam logic [7:0] AddrSysId1 = 8'h01;
-  // localparam logic [7:0] AddrSysId2 = 8'h02;
-  // localparam logic [7:0] AddrSysId3 = 8'h03;
-  // localparam logic [7:0] AddrSysId4 = 8'h04;
-  // localparam logic [7:0] AddrSysVersion = 8'h05;
-  //
   localparam logic [7:0] AddrLedCtrl = 8'h06;
   localparam logic [7:0] AddrIoPinMode = 8'h07;
-  //
-  // localparam logic [7:0] AddrSigGenPeriod0 = 8'h08;
-  // localparam logic [7:0] AddrSigGenPeriod1 = 8'h09;
-  // localparam logic [7:0] AddrSigGenPeriod2 = 8'h10;
-  // localparam logic [7:0] AddrSigGenPeriod3 = 8'h11;
 endpackage
 
 
