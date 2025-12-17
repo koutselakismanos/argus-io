@@ -7,5 +7,6 @@ testbench.vvp
 waveform.vcd
 
 .idea/
+.nvim/
 build/
 sim_build/
