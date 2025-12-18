@@ -10,7 +10,7 @@ package memory_map;
   // Packed struct first field defined is the MSB
   typedef struct packed {
     logic [31:0] sig_gen_period;
-    logic led_active;
+    logic led_active_n;
     logic [6:0] _padding;  // 7 bits padding
     logic [7:0] io_pin_mode;
     logic [7:0] sys_version;
@@ -26,7 +26,7 @@ package memory_map;
 
   localparam fpga_settings_t DefaultSettings = {
     32'd12000,  // sig_gen_period
-    1'b0,  // led_active
+    1'b1,  // led_active_n
     7'b0,  //_padding
     8'h00,  // io_pin_mode
     8'h01,  // version 1
