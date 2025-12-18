@@ -7,6 +7,8 @@ systems.
 
 ## Core Features
 
+- [ ] **Signal Generator**: Multi-channel PWM and square wave generation for
+stimulating and testing circuits.
 - [ ] **FPGA-Accelerated Logic Analyzer**: 16+ channels at 100MHz+ with
 hardware-assisted protocol decoding.
 - [ ] **Universal JTAG/SWD Debug Probe**: High-speed, CMSIS-DAP v2 compliant
@@ -15,8 +17,6 @@ debugger for flashing and step-through debugging of ARM, RISC-V, and ESP32 targe
 and UART devices directly from the software dashboard or a script.
 - [ ] **Basic Oscilloscope & Voltmeter**: A 2-channel, 0-20V analog front-end
 for visualizing signals and checking power rails.
-- [ ] **Signal Generator**: Multi-channel PWM and square wave generation for
-stimulating and testing circuits.
 - [ ] **Wireless Connectivity**: A built-in web server hosted on the ESP32
 allows for real-time monitoring and control from a phone or tablet.
 - [ ] **Python Scripting API**: Automate complex testing, characterization,
