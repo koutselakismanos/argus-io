@@ -5,7 +5,7 @@ MOD ?= top
 BUILD_DIR = build
 SIM_DIR = sim_build
 
-SRCS = memory_map.sv settings_controller.sv top.sv pll.sv spi_slave.sv
+SRCS = memory_map.sv settings_controller.sv top.sv pll.sv spi_slave.sv pwm_generator.sv
 
 PACKAGE = sg48
 DEVICE = up5k
@@ -57,10 +57,6 @@ sim:
 	@echo "### Opening Waveform ###"
 	gtkwave waveform.vcd
 
-# sim:
-# 	sv2v -I. memory_map.sv settings_controller.sv top.sv pll.sv spi_slave.sv top_tb.sv > build/converted_sim.v
-# 	iverilog -g2012 -o sim_build/top.vvp build/converted_sim.v
-# 	vvp sim_build/top.vvp
 clean:
 	rm -f $(PROJECT).json $(PROJECT).asc $(PROJECT).bin
 	rm -rf $(SIM_DIR) waveform.vcd
