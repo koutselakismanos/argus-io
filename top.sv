@@ -2,7 +2,7 @@ import memory_map::*;
 
 module top (
     input logic clk,
-    input logic sys_rst,
+    // input logic sys_rst,
 
     input  logic sclk,
     input  logic cs_n,
@@ -16,6 +16,19 @@ module top (
 
   logic clk_100;
   logic locked;
+
+  // -- Delete me v
+  logic sys_rst;
+  logic [7:0] reset_counter = 8'hFF;  // An 8-bit counter
+
+  always_ff @(posedge clk_100) begin
+    if (|reset_counter) begin
+      reset_counter <= reset_counter - 1;
+    end
+  end
+
+  assign sys_rst = |reset_counter;
+  // -- Delete me ^
 
   pll _pll (
       .clock_in(clk),
@@ -39,15 +52,6 @@ module top (
       .rx_byte(rx_byte),
       .rx_valid(rx_valid)
   );
-
-
-  logic [27:0] timer = 0;
-  always_ff @(posedge clk_100) begin
-    timer <= timer + 1;
-  end
-
-  assign led_r = timer[27];
-
 
   typedef enum {
     WAIT_FOR_ADDRESS,
@@ -84,6 +88,7 @@ module top (
 
   memory_map::fpga_settings_t active_settings;
 
+  logic pwm_pulse;
   settings_controller _settings_controller (
       .clk(clk_100),
       .rst(sys_rst),
@@ -94,6 +99,26 @@ module top (
       .current_settings(active_settings)
   );
 
-  assign led_b = active_settings.led_active;
 
+  pwm_generator my_pwm (
+      .clk             (clk_100),
+      .rst             (sys_rst),
+      .period_ticks    (32'd100000),
+      .duty_cycle_ticks(32'd1000),
+      .pulse           (pwm_pulse)
+  );
+
+  logic [31:0] counter;
+
+  always_ff @(posedge clk_100) begin
+    if (sys_rst) begin
+      counter <= 0;
+    end else begin
+      counter <= counter + 1;
+    end
+  end
+
+  assign led_r = ~pwm_pulse | ~counter[27];
+  // assign led_g = ~pwm_pulse;
+  // assign led_b = active_settings.led_active_n | ~pwm_pulse;
 endmodule

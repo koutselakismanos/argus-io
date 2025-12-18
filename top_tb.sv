@@ -101,7 +101,7 @@ module top_tb;
     if (rx_buffer[1] == 8'h01) $display(">>> TEST 3 PASSED <<<");
     else $display("!!! TEST 3 FAILED !!!");
 
-    #5000;
+    #20000;
     $finish;
   end
 endmodule
